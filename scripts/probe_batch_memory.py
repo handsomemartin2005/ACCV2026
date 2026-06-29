@@ -20,7 +20,7 @@ def make_batch(batch_size, imgsz, device):
     boxes = []
     for i in range(batch_size):
         batch_idx.extend([i, i])
-        cls.extend([[0.], [4.]])
+        cls.extend([[0.], [0.]])
         boxes.extend([[0.50, 0.50, 0.20, 0.20], [0.30, 0.35, 0.12, 0.16]])
     return {
         'img': img,
@@ -36,11 +36,17 @@ def main():
     parser.add_argument('--imgsz', type=int, default=640)
     parser.add_argument('--batches', nargs='+', type=int, default=[1, 2, 3, 4, 6, 8, 10, 12, 16])
     parser.add_argument('--device', default='0')
+    parser.add_argument('--gpu-memory-gb', type=float, default=0.0)
     args = parser.parse_args()
 
     device = torch.device(f'cuda:{args.device}' if args.device.isdigit() else args.device)
+    if args.gpu_memory_gb and device.type == 'cuda':
+        total_gb = torch.cuda.get_device_properties(device).total_memory / 1024 ** 3
+        fraction = max(0.01, min(float(args.gpu_memory_gb) / total_gb, 1.0))
+        torch.cuda.set_per_process_memory_fraction(fraction, device)
+        print(f'{device} per-process memory cap: {args.gpu_memory_gb:.2f} GiB ({fraction:.3f} of {total_gb:.2f} GiB)')
     with contextlib.redirect_stdout(io.StringIO()):
-        model = RTDETR(args.cfg)
+        model = RTDETR(args.cfg, verbose=False)
     net = model.model.to(device).train()
 
     for batch_size in args.batches:

@@ -37,6 +37,27 @@ EXPERIMENTS = {
 }
 
 
+def parse_cuda_index(device):
+    device = str(device)
+    if device.isdigit():
+        return int(device)
+    if device.startswith('cuda:') and device.split(':', 1)[1].isdigit():
+        return int(device.split(':', 1)[1])
+    return None
+
+
+def apply_gpu_memory_limit(args):
+    if not args.gpu_memory_gb or not torch.cuda.is_available():
+        return
+    device_idx = parse_cuda_index(args.device)
+    if device_idx is None:
+        return
+    total_gb = torch.cuda.get_device_properties(device_idx).total_memory / 1024 ** 3
+    fraction = max(0.01, min(float(args.gpu_memory_gb) / total_gb, 1.0))
+    torch.cuda.set_per_process_memory_fraction(fraction, device_idx)
+    print(f'cuda:{device_idx} per-process memory cap: {args.gpu_memory_gb:.2f} GiB ({fraction:.3f} of {total_gb:.2f} GiB)')
+
+
 def selected_experiments(pattern):
     rx = re.compile(pattern) if pattern else None
     return [(name, cfg) for name, cfg in EXPERIMENTS.items() if rx is None or rx.search(name)]
@@ -115,8 +136,11 @@ def main():
     parser.add_argument('--exist-ok', action='store_true')
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--quiet-model', action='store_true', help='Skip verbose model summary/FLOPs tracing.')
+    parser.add_argument('--gpu-memory-gb', type=float, default=0.0,
+                        help='Set a PyTorch CUDA per-process memory cap in GiB. 0 disables the cap.')
     args = parser.parse_args()
 
+    apply_gpu_memory_limit(args)
     ensure_configs()
     experiments = selected_experiments(args.only)
     if args.mode == 'list':
