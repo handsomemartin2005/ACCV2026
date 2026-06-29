@@ -143,6 +143,8 @@ def train_one(name, args, status_path):
         ] + resume_args
         if args.quiet_model:
             cmd.append('--quiet-model')
+        if args.deterministic:
+            cmd.append('--deterministic')
         if args.gpu_memory_gb > 0:
             cmd += ['--gpu-memory-gb', str(args.gpu_memory_gb)]
         append_status(status_path, {
@@ -276,6 +278,8 @@ def main():
     parser.add_argument('--visualize-only', action='store_true')
     parser.add_argument('--no-visualize', action='store_true')
     parser.add_argument('--quiet-model', action='store_true', help='Pass --quiet-model to training subprocesses.')
+    parser.add_argument('--deterministic', action='store_true',
+                        help='Pass --deterministic to training subprocesses. Disabled by default for speed.')
     parser.add_argument('--gpu-memory-gb', type=float, default=0.0,
                         help='Pass a PyTorch CUDA per-process memory cap in GiB to training subprocesses.')
     args = parser.parse_args()

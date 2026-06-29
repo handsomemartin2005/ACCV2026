@@ -102,6 +102,7 @@ def run_train(name, cfg, args):
         save_period=args.save_period,
         exist_ok=args.exist_ok,
         verbose=not args.quiet_model,
+        deterministic=args.deterministic,
     )
     if args.resume_from:
         train_kwargs['resume'] = str(args.resume_from)
@@ -136,6 +137,8 @@ def main():
     parser.add_argument('--exist-ok', action='store_true')
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--quiet-model', action='store_true', help='Skip verbose model summary/FLOPs tracing.')
+    parser.add_argument('--deterministic', action='store_true',
+                        help='Enable deterministic training. By default this is disabled for speed.')
     parser.add_argument('--gpu-memory-gb', type=float, default=0.0,
                         help='Set a PyTorch CUDA per-process memory cap in GiB. 0 disables the cap.')
     args = parser.parse_args()
