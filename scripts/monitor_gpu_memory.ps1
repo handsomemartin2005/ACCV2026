@@ -1,7 +1,8 @@
 param(
     [int]$LimitMiB = 12000,
     [int]$IntervalSeconds = 10,
-    [string]$LogPath = "run\gpu_memory_monitor.log"
+    [string]$LogPath = "run\gpu_memory_monitor.log",
+    [switch]$StopOnLimit
 )
 
 $ErrorActionPreference = "Continue"
@@ -17,7 +18,7 @@ function Write-MonitorLog {
 }
 
 $breaches = 0
-Write-MonitorLog "started limit_mib=$LimitMiB interval_seconds=$IntervalSeconds"
+Write-MonitorLog "started limit_mib=$LimitMiB interval_seconds=$IntervalSeconds stop_on_limit=$($StopOnLimit.IsPresent)"
 
 while ($true) {
     $trainProcs = Get-CimInstance Win32_Process |
@@ -44,7 +45,7 @@ while ($true) {
         $breaches = 0
     }
 
-    if ($breaches -ge 2) {
+    if ($StopOnLimit -and $breaches -ge 2) {
         Write-MonitorLog "stopping training because memory exceeded limit twice"
         foreach ($proc in $trainProcs) {
             try {
@@ -59,4 +60,3 @@ while ($true) {
 
     Start-Sleep -Seconds $IntervalSeconds
 }
-
