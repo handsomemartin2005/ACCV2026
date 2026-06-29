@@ -1,0 +1,40 @@
+# SCH-MDETR experimental configuration.
+
+nc: 17
+scales:
+  l: [1.00, 1.00, 1024]
+
+backbone:
+  # Outputs four feature slots: semantic guide + routed Top-3 scales from S1...SM.
+  - [-1, 1, sch_mamba_adapters, [5, 3, RN50, openai, True]]  # 4
+
+head:
+  # Routed low-resolution scale -> AIFI.
+  - [-1, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 5 input_proj.2
+  - [-1, 1, AIFI, [1024, 8]] # 6
+  - [-1, 1, Conv, [256, 1, 1]]  # 7, Y5, lateral_convs.0
+
+  # Routed middle-resolution scale -> top-down fusion.
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 8
+  - [3, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 9 input_proj.1
+  - [[-2, -1], 1, Concat, [1]] # 10
+  - [-1, 3, RepC3, [256, 0.5]]  # 11, fpn_blocks.0
+  - [-1, 1, Conv, [256, 1, 1]]   # 12, Y4, lateral_convs.1
+
+  # Routed high-resolution scale -> top-down fusion.
+  - [-1, 1, nn.Upsample, [None, 2, 'nearest']] # 13
+  - [2, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 14 input_proj.0
+  - [[-2, -1], 1, Concat, [1]]  # 15
+  - [-1, 3, RepC3, [256, 0.5]]    # X3 (16), fpn_blocks.1
+
+  # PAN bottom-up fusion.
+  - [-1, 1, Conv, [256, 3, 2]]   # 17, downsample_convs.0
+  - [[-1, 12], 1, Concat, [1]]  # 18
+  - [-1, 3, RepC3, [256, 0.5]]    # F4 (19), pan_blocks.0
+
+  - [-1, 1, Conv, [256, 3, 2]]   # 20, downsample_convs.1
+  - [[-1, 7], 1, Concat, [1]]  # 21
+  - [-1, 3, RepC3, [256, 0.5]]    # F5 (22), pan_blocks.1
+
+  # Semantic guide + encoded TopK feature pyramid -> UHR-enhanced decoder.
+  - [[1, 16, 19, 22], 1, SCH_GUIDE_RTDETRDecoder, [nc, 192, 300, 4, 8, 3]]

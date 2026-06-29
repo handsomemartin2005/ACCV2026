@@ -1,0 +1,54 @@
+# Python/cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Local IDE/env
+.idea/
+.vscode/
+.venv/
+venv/
+env/
+
+# Datasets and generated experiment artifacts
+dataset/coco_uav/
+dataset/detfly/
+dataset/detfly_smoke/
+dataset/detfly_smoke_tiny/
+run/
+
+# Model/checkpoint/export artifacts
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.engine
+*.torchscript
+*.safetensors
+
+# Download/build scratch dirs
+tmp_mamba_wheels/
+tmp_mamba_wheels_new/
+build/
+dist/
+*.egg-info/
+*.whl
+*.zip
+*.tar
+*.tar.gz
+*.7z
+*.rar
+
+# Training/runtime side files
+*.cache
+*.log
+*.out
+*.err
+events.out.tfevents*
+
+# Accidental shell/output artifacts
+=1.4.2,

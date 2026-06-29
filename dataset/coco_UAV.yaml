@@ -1,0 +1,53 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# COCO 2017 dataset https://cocodataset.org by Microsoft
+# Documentation: https://docs.ultralytics.com/datasets/detect/coco/
+# Example usage: coco train data=coco.yaml
+# parent
+# ├── ultralytics
+# └── datasets
+#     └── coco  ← downloads here (20.1 GB)
+
+# Train/val/test sets as 1) dir: path/to/imgs, 2) file: path/to/imgs.txt, or 3) list: [path/to/imgs1, path/to/imgs2, ..]
+path: D:/PyCharmPojects/Graph-MDETR/dataset/coco_uav # dataset root dir
+train: images/train
+val: images/val
+test: images/test
+
+# Classes
+names:
+  0: C1
+  1: C2
+  2: C3
+  3: C4
+  4: C5
+  5: C6
+  6: C7
+  7: C8
+  8: C9
+  9: C10
+  10: C11
+  11: C12
+  12: C13
+  13: C14
+  14: C15
+  15: C16
+  16: C17
+
+  #names:
+  #  0: Casing_base
+  #  1: Insulator
+  #  2: Insulator_base
+  #  3: Isoelectric_line
+  #  4: Load_bearing_cable_base
+  #  5: Locator_bracing_base
+  #  6: Locator_bracing_base_ear
+  #  7: Locator_clamp
+  #  8: Locator_hook
+  #  9: Locator_ring
+  #  10: Locator_tube_connector
+  #  11: Rectangular_locator
+  #  12: Rotary_double_ear
+  #  13: Sleeve_double_ear
+  #  14: Sleeve_screw
+  #  15: Windproof_wire
+  #  16: Windproof_wire_ring
