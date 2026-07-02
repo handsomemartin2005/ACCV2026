@@ -70,6 +70,17 @@ def selected_experiments(pattern):
     return [(name, cfg) for name, cfg in EXPERIMENTS.items() if rx is None or rx.search(name)]
 
 
+def parse_cache(value):
+    value = str(value).lower()
+    if value in {'false', '0', 'none', 'off', 'no'}:
+        return False
+    if value in {'true', '1', 'on', 'yes'}:
+        return True
+    if value in {'ram', 'disk'}:
+        return value
+    raise ValueError(f'Unsupported cache value: {value}. Use false, true, ram, or disk.')
+
+
 def ensure_configs():
     if not ABLATION_DIR.exists() or not any(ABLATION_DIR.glob('*.yaml')):
         subprocess.run([sys.executable, str(ROOT / 'scripts/generate_sch_ablation_configs.py')], check=True)
@@ -98,7 +109,7 @@ def run_train(name, cfg, args):
     model = RTDETR(str(cfg), verbose=not args.quiet_model)
     train_kwargs = dict(
         data=str(args.data),
-        cache=False,
+        cache=parse_cache(args.cache),
         imgsz=args.imgsz,
         epochs=args.epochs,
         batch=args.batch,
@@ -151,6 +162,8 @@ def main():
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--quiet-model', action='store_true', help='Skip verbose model summary/FLOPs tracing.')
     parser.add_argument('--amp', action='store_true', help='Enable automatic mixed precision training.')
+    parser.add_argument('--cache', default='false',
+                        help='Dataset cache mode passed to Ultralytics: false, true, ram, or disk.')
     parser.add_argument('--no-val', action='store_true', help='Skip validation during training, useful for speed probes.')
     parser.add_argument('--fraction', type=float, default=1.0,
                         help='Fraction of the training dataset to use. Keep 1.0 for full training.')

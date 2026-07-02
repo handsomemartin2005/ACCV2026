@@ -150,6 +150,8 @@ def train_one(name, args, status_path):
             cmd.append('--quiet-model')
         if args.amp:
             cmd.append('--amp')
+        if args.cache != 'false':
+            cmd += ['--cache', args.cache]
         if args.fraction < 1.0:
             cmd += ['--fraction', str(args.fraction)]
         if args.warmup_epochs is not None:
@@ -291,6 +293,8 @@ def main():
     parser.add_argument('--no-visualize', action='store_true')
     parser.add_argument('--quiet-model', action='store_true', help='Pass --quiet-model to training subprocesses.')
     parser.add_argument('--amp', action='store_true', help='Pass --amp to training subprocesses.')
+    parser.add_argument('--cache', default='false',
+                        help='Pass dataset cache mode to training subprocesses: false, true, ram, or disk.')
     parser.add_argument('--fraction', type=float, default=1.0,
                         help='Pass a training data fraction to subprocesses. Keep 1.0 for full training.')
     parser.add_argument('--warmup-epochs', type=float, default=None,
