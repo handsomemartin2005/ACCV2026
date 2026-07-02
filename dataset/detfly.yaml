@@ -1,4 +1,4 @@
-path: D:/PyCharmPojects/Graph-MDETR/dataset/detfly
+path: dataset/detfly
 train: images/train
 val: images/val
 test: images/test
