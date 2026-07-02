@@ -850,7 +850,8 @@ class CLIPGuidedSemanticPrototypeLearning(nn.Module):
     )
 
     def __init__(self, num_classes=17, embed_dim=192, clip_model='RN50', clip_pretrained='openai',
-                 category_names=None, use_clip=True, use_image_prior=True):
+                 category_names=None, use_clip=True, use_image_prior=True,
+                 prompt_template='a UAV image of catenary {name}'):
         super().__init__()
         self.use_real_clip = False
         self.use_image_prior = use_image_prior
@@ -871,7 +872,7 @@ class CLIPGuidedSemanticPrototypeLearning(nn.Module):
                 for p in self.clip.parameters():
                     p.requires_grad_(False)
                 clip_dim = self.clip.text_projection.shape[1] if hasattr(self.clip, 'text_projection') else clip_dim
-                prompts = [f'a UAV image of catenary {name}' for name in self.category_names]
+                prompts = [prompt_template.format(name=name) for name in self.category_names]
                 self.register_buffer('clip_text_tokens', self.tokenizer(prompts), persistent=False)
                 self.use_real_clip = True
             except Exception as exc:
@@ -1011,7 +1012,8 @@ class SCHMambaAdapter(nn.Module):
     def __init__(self, candidate_scales=5, topk=3, num_classes=17, clip_model='RN50', clip_pretrained='openai',
                  use_clip=True, output_scales=3, use_semantic_prior=True, use_high_frequency=True,
                  use_scale_prior=True, use_structure_prior=True, use_guide_semantic=True,
-                 use_clip_image=True):
+                 use_clip_image=True, category_names=None,
+                 prompt_template='a UAV image of catenary {name}'):
         super().__init__()
         self.base = PlainMambaAdapter(num_classes=num_classes)
         self.candidate_scales = candidate_scales
@@ -1024,8 +1026,10 @@ class SCHMambaAdapter(nn.Module):
             embed_dim=self.embed_dim,
             clip_model=clip_model,
             clip_pretrained=clip_pretrained,
+            category_names=category_names,
             use_clip=use_clip,
-            use_image_prior=use_clip_image)
+            use_image_prior=use_clip_image,
+            prompt_template=prompt_template)
         self.router = DynamicTopKScaleRouter(
             embed_dim=self.embed_dim,
             topk=topk,
@@ -1095,11 +1099,13 @@ def mamba_adapters():
 def sch_mamba_adapters(candidate_scales=5, topk=3, clip_model='RN50', clip_pretrained='openai', use_clip=True,
                        output_scales=3, use_semantic_prior=True, use_high_frequency=True,
                        use_scale_prior=True, use_structure_prior=True, use_guide_semantic=True,
-                       use_clip_image=True):
+                       use_clip_image=True, num_classes=17, category_names=None,
+                       prompt_template='a UAV image of catenary {name}'):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SCHMambaAdapter(
         candidate_scales=candidate_scales,
         topk=topk,
+        num_classes=num_classes,
         clip_model=clip_model,
         clip_pretrained=clip_pretrained,
         use_clip=use_clip,
@@ -1109,7 +1115,9 @@ def sch_mamba_adapters(candidate_scales=5, topk=3, clip_model='RN50', clip_pretr
         use_scale_prior=use_scale_prior,
         use_structure_prior=use_structure_prior,
         use_guide_semantic=use_guide_semantic,
-        use_clip_image=use_clip_image).to(device)
+        use_clip_image=use_clip_image,
+        category_names=category_names,
+        prompt_template=prompt_template).to(device)
     return model
 
 if __name__ == '__main__':

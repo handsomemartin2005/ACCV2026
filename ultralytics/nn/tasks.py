@@ -840,6 +840,10 @@ def parse_model(d, ch, verbose=True, warehouse_manager=None):  # model_dict, inp
             args.insert(1, decoder_channel[1:])
             c2 = decoder_channel[-1]
 
+        elif m is LightSCH_RTDETRDecoder:
+            args.insert(1, [ch[x] for x in f])
+            c2 = ch[f[-1]]
+
         elif isinstance(m, str):
             t = m
             # len(args) = 3 -> [pretrained, pretrained_cfg, img_size]

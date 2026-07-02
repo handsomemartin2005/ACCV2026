@@ -369,8 +369,8 @@ def main():
 
     device = torch.device(args.device)
     net = maybe_load_model(args.cfg, args.weights or None, device)
-    backbone = net.model[0]
     decoder = net.model[-1]
+    backbone = net.model[0]
 
     rows = []
     for path in paths:
@@ -379,14 +379,15 @@ def main():
         with torch.no_grad():
             _ = net(tensor)
 
-        if not hasattr(backbone, 'last_route_scores'):
+        route_source = backbone if hasattr(backbone, 'last_route_scores') else decoder
+        if not hasattr(route_source, 'last_route_scores'):
             raise RuntimeError('Backbone does not expose SCH route scores. Use an SCH-MDETR config or weights.')
 
         stem = path.stem
-        scores = backbone.last_route_scores[0].float().cpu().numpy()
-        selected = backbone.last_route_indices.cpu().numpy().astype(int).tolist()
-        candidate_shapes = getattr(backbone, 'last_candidate_shapes', [])
-        response = backbone.last_semantic_response[0].float().cpu().numpy()
+        scores = route_source.last_route_scores[0].float().cpu().numpy()
+        selected = route_source.last_route_indices.cpu().numpy().astype(int).tolist()
+        candidate_shapes = getattr(route_source, 'last_candidate_shapes', [])
+        response = route_source.last_semantic_response[0].float().cpu().numpy()
         top_semantic = np.argsort(response)[::-1][:5].astype(int).tolist()
         boxes = load_yolo_boxes(path, resized.shape, class_names)
 

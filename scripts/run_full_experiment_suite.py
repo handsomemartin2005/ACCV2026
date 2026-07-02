@@ -17,6 +17,11 @@ from scripts.run_ablation import EXPERIMENTS, ensure_configs
 
 
 DEFAULT_ORDER = [
+    'yolov8_detr_n',
+    'yolov8_detr_p2_n',
+    'yolov8_detr_fasternet_n',
+    'rtdetr_r18_n',
+    'rtdetr_r18',
     'baseline',
     'full_k3',
     'dtsr_k3',
@@ -143,6 +148,13 @@ def train_one(name, args, status_path):
         ] + resume_args
         if args.quiet_model:
             cmd.append('--quiet-model')
+        if args.amp:
+            cmd.append('--amp')
+        if args.fraction < 1.0:
+            cmd += ['--fraction', str(args.fraction)]
+        if args.warmup_epochs is not None:
+            cmd += ['--warmup-epochs', str(args.warmup_epochs)]
+        cmd += ['--patience', str(args.patience)]
         if args.deterministic:
             cmd.append('--deterministic')
         if args.gpu_memory_gb > 0:
@@ -278,6 +290,13 @@ def main():
     parser.add_argument('--visualize-only', action='store_true')
     parser.add_argument('--no-visualize', action='store_true')
     parser.add_argument('--quiet-model', action='store_true', help='Pass --quiet-model to training subprocesses.')
+    parser.add_argument('--amp', action='store_true', help='Pass --amp to training subprocesses.')
+    parser.add_argument('--fraction', type=float, default=1.0,
+                        help='Pass a training data fraction to subprocesses. Keep 1.0 for full training.')
+    parser.add_argument('--warmup-epochs', type=float, default=None,
+                        help='Pass a warmup_epochs override to training subprocesses.')
+    parser.add_argument('--patience', type=int, default=50,
+                        help='Pass early stopping patience to training subprocesses.')
     parser.add_argument('--deterministic', action='store_true',
                         help='Pass --deterministic to training subprocesses. Disabled by default for speed.')
     parser.add_argument('--gpu-memory-gb', type=float, default=0.0,

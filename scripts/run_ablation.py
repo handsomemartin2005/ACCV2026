@@ -16,6 +16,12 @@ ABLATION_DIR = ROOT / 'ultralytics/cfg/models/rt-detr/ablations'
 
 
 EXPERIMENTS = {
+    'yolov8_detr_n': ROOT / 'ultralytics/cfg/models/yolo-detr/yolov8-detr.yaml',
+    'yolov8_detr_p2_n': ROOT / 'ultralytics/cfg/models/yolo-detr/yolov8-detr-p2.yaml',
+    'yolov8_detr_fasternet_n': ROOT / 'ultralytics/cfg/models/yolo-detr/yolov8-detr-fasternet.yaml',
+    'rtdetr_r18_n': ROOT / 'ultralytics/cfg/models/rt-detr/rtdetr-r18-n.yaml',
+    'sch_rtdetr_r18_n': ROOT / 'ultralytics/cfg/models/rt-detr/sch-rtdetr-r18-n-detfly.yaml',
+    'rtdetr_r18': ROOT / 'ultralytics/cfg/models/rt-detr/rtdetr-r18.yaml',
     'baseline': ROOT / 'ultralytics/cfg/models/rt-detr/gcn-rtdetr-mamba.yaml',
     'dtsr_k3': ABLATION_DIR / 'sch_dtsr_k3.yaml',
     'clip_dtsr_k3': ABLATION_DIR / 'sch_clip_dtsr_k3.yaml',
@@ -23,6 +29,7 @@ EXPERIMENTS = {
     'full_k1': ABLATION_DIR / 'sch_full_k1.yaml',
     'full_k2': ABLATION_DIR / 'sch_full_k2.yaml',
     'full_k3': ABLATION_DIR / 'sch_full_k3.yaml',
+    'full_k3_detfly': ABLATION_DIR / 'sch_full_k3_detfly.yaml',
     'full_k4': ABLATION_DIR / 'sch_full_k4.yaml',
     'full_m4_k3': ABLATION_DIR / 'sch_full_m4_k3.yaml',
     'full_m5_k3': ABLATION_DIR / 'sch_full_m5_k3.yaml',
@@ -103,9 +110,15 @@ def run_train(name, cfg, args):
         exist_ok=args.exist_ok,
         verbose=not args.quiet_model,
         deterministic=args.deterministic,
+        amp=args.amp,
+        fraction=args.fraction,
+        val=not args.no_val,
+        patience=args.patience,
     )
     if args.resume_from:
         train_kwargs['resume'] = str(args.resume_from)
+    if args.warmup_epochs is not None:
+        train_kwargs['warmup_epochs'] = args.warmup_epochs
     model.train(**train_kwargs)
 
 
@@ -137,6 +150,14 @@ def main():
     parser.add_argument('--exist-ok', action='store_true')
     parser.add_argument('--dry-run', action='store_true')
     parser.add_argument('--quiet-model', action='store_true', help='Skip verbose model summary/FLOPs tracing.')
+    parser.add_argument('--amp', action='store_true', help='Enable automatic mixed precision training.')
+    parser.add_argument('--no-val', action='store_true', help='Skip validation during training, useful for speed probes.')
+    parser.add_argument('--fraction', type=float, default=1.0,
+                        help='Fraction of the training dataset to use. Keep 1.0 for full training.')
+    parser.add_argument('--warmup-epochs', type=float, default=None,
+                        help='Override warmup_epochs. Useful because some RT-DETR configs default to 2000.')
+    parser.add_argument('--patience', type=int, default=50,
+                        help='Early stopping patience in epochs. Set 0 to disable early stopping.')
     parser.add_argument('--deterministic', action='store_true',
                         help='Enable deterministic training. By default this is disabled for speed.')
     parser.add_argument('--gpu-memory-gb', type=float, default=0.0,

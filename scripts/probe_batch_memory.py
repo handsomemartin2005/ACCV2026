@@ -37,6 +37,7 @@ def main():
     parser.add_argument('--batches', nargs='+', type=int, default=[1, 2, 3, 4, 6, 8, 10, 12, 16])
     parser.add_argument('--device', default='0')
     parser.add_argument('--gpu-memory-gb', type=float, default=0.0)
+    parser.add_argument('--amp', action='store_true', help='Probe with CUDA automatic mixed precision.')
     args = parser.parse_args()
 
     device = torch.device(f'cuda:{args.device}' if args.device.isdigit() else args.device)
@@ -54,7 +55,8 @@ def main():
         torch.cuda.reset_peak_memory_stats(device)
         try:
             batch = make_batch(batch_size, args.imgsz, device)
-            loss, _ = net.loss(batch)
+            with torch.amp.autocast(device_type='cuda', enabled=args.amp and device.type == 'cuda'):
+                loss, _ = net.loss(batch)
             loss.backward()
             peak = torch.cuda.max_memory_allocated(device) / 1024 ** 3
             reserved = torch.cuda.max_memory_reserved(device) / 1024 ** 3
